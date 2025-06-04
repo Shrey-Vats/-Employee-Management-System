@@ -2,7 +2,7 @@ import React from "react";
 
 const CreateTask = ()=>{
     return (
-      <div className="mt-10">
+      <div id='createtask' className="mt-7 p-5 bg-[#1c1c1c] rounded">
         <form className="flex flex-wrap w-full  items-start justify-between">
           <div className="w-1/2">
             <div>
