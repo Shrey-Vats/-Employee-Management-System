@@ -8,7 +8,7 @@ import MyTasks from "../TaskUser/MyTasks";
 import MyPendingTasks from "../TaskUser/MyPendingTasks";
 import MyInProgressTasks from "../TaskUser/MyInProgressTasks";
 import MyCompletedTasks from "../TaskUser/MyCompletedTasks";
-import MyRejectedTasks from "../TaskUser/MyRejectedTasks"; // Or MyFailedTasks, as per your preference
+import MyRejectedTasks from "../TaskUser/MyFailedTasks"; // Or MyFailedTasks, as per your preference
 
 const EmployeeDashboard = () => {
   const [activeTab, setActiveTab] = useState("myTasks"); // Default to 'My All Tasks' view
