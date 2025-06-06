@@ -1,51 +1,79 @@
 // src/components/Dashboard/EmployeeDashboard.jsx
 import React, { useState, useEffect } from "react";
-// Corrected path to Header from src/components/other/
-import Header from "../other/Header";
+import Header from "../other/Header"; // Path unchanged
 
 // Corrected paths to employee-specific task components from src/components/TaskUser/
 import MyTasks from "../TaskUser/MyTasks";
 import MyPendingTasks from "../TaskUser/MyPendingTasks";
 import MyInProgressTasks from "../TaskUser/MyInProgressTasks";
 import MyCompletedTasks from "../TaskUser/MyCompletedTasks";
-import MyRejectedTasks from "../TaskUser/MyFailedTasks"; // Or MyFailedTasks, as per your preference
+import MyRejectedTasks from "../TaskUser/MyRejectedTasks"; // Or MyFailedTasks
+
+// Import useAuth and useTasks hooks
+import { useAuth } from "../../context/AuthContext";
+import { useTasks } from "../../context/TaskContext";
 
 const EmployeeDashboard = () => {
+  // Use Auth context for user info and authentication status
+  const { user, isEmployee, isAuthenticated } = useAuth();
+
+  // Use Task context to get tasks data and functions
+  // Note: TaskContext already filters based on user.id for employees
+  const {
+    tasks, // This `tasks` variable will already be filtered for the employee's tasks by TaskContext
+    isLoadingTasks,
+    taskError,
+    fetchTasks,
+    newTasks, // These are specific to the employee now as per TaskContext logic
+    inProgressTasks, // Tasks that are 'in progress'
+    completedTasks,
+    failedTasks,
+    rejectedTasks,
+    updateTask, // Employee-specific actions: updating task status (start, complete, fail)
+  } = useTasks();
+
   const [activeTab, setActiveTab] = useState("myTasks"); // Default to 'My All Tasks' view
-  const [loggedInUser, setLoggedInUser] = useState(null); // State to hold logged-in user info
 
-  // Simulate fetching logged-in user data
-  // In a real application, you'd fetch this from an authentication context, API, or global state
+  // Fetch tasks when the component mounts or user/auth state changes
   useEffect(() => {
-    // This `id` must match the `assignedToId` in your task data for filtering to work.
-    const user = {
-      id: "employee123",
-      name: "Alice Smith",
-      email: "alice@example.com",
-    };
-    setLoggedInUser(user);
-  }, []);
+    if (isAuthenticated && isEmployee) {
+      fetchTasks(); // Trigger fetching tasks relevant to this employee
+    }
+  }, [isAuthenticated, isEmployee, fetchTasks]);
 
-  if (!loggedInUser) {
-    // Show a loading state or redirect if user is not logged in yet
+  if (isLoadingTasks && !tasks.length) {
     return (
       <div className="min-h-screen w-full bg-gray-950 flex items-center justify-center text-white">
-        Loading employee data...
+        Loading your tasks...
+      </div>
+    );
+  }
+
+  if (taskError) {
+    return (
+      <div className="min-h-screen w-full bg-gray-950 flex items-center justify-center text-red-500">
+        Error loading tasks: {taskError}
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !isEmployee) {
+    return (
+      <div className="min-h-screen w-full bg-gray-950 flex items-center justify-center text-red-500">
+        Access Denied: You must be an employee to view this page.
       </div>
     );
   }
 
   return (
     <div className="min-h-screen w-full bg-gray-950 p-6 sm:p-10 text-white font-sans">
-      {/* Your common header component */}
       <Header />
-
       <h1 className="text-4xl font-bold mb-10 text-center">
-        Hello, {loggedInUser.name}! Welcome to Your Tasks
+        Hello, {user.name}! Welcome to Your Tasks
       </h1>
 
-      {/* Employee-specific Navigation Tabs */}
       <div className="flex flex-wrap justify-center mb-8 gap-2 sm:gap-4">
+        {/* ... (your existing tab buttons) ... */}
         <button
           onClick={() => setActiveTab("myTasks")}
           className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium text-sm sm:text-lg transition-colors duration-200
@@ -103,21 +131,25 @@ const EmployeeDashboard = () => {
         </button>
       </div>
 
-      {/* Conditionally Rendered Employee Task Views */}
       <div className="content-area">
-        {/* Pass the loggedInUser object to each task component for filtering */}
-        {activeTab === "myTasks" && <MyTasks loggedInUser={loggedInUser} />}
+        {/* Pass filtered tasks and update function to employee task components */}
+        {activeTab === "myTasks" && (
+          <MyTasks tasks={tasks} updateTask={updateTask} />
+        )}
         {activeTab === "myPendingTasks" && (
-          <MyPendingTasks loggedInUser={loggedInUser} />
+          <MyPendingTasks tasks={newTasks} updateTask={updateTask} />
         )}
         {activeTab === "myInProgressTasks" && (
-          <MyInProgressTasks loggedInUser={loggedInUser} />
+          <MyInProgressTasks tasks={inProgressTasks} updateTask={updateTask} />
         )}
         {activeTab === "myCompletedTasks" && (
-          <MyCompletedTasks loggedInUser={loggedInUser} />
+          <MyCompletedTasks tasks={completedTasks} updateTask={updateTask} />
         )}
         {activeTab === "myRejectedTasks" && (
-          <MyRejectedTasks loggedInUser={loggedInUser} />
+          <MyRejectedTasks
+            tasks={failedTasks || rejectedTasks}
+            updateTask={updateTask}
+          />
         )}
       </div>
     </div>

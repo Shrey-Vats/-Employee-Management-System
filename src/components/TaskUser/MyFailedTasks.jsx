@@ -1,114 +1,54 @@
-// src/components/TaskUser/MyFailedTasks.jsx
+// src/components/TaskUser/MyRejectedTasks.jsx
 import React from "react";
 
-const MyFailedTasks = ({ loggedInUser }) => {
-  // --- Your complete mock data for all employee tasks ---
-  const allEmployeeSpecificTasks = [
-    {
-      id: "t1",
-      assignedToId: "employee123",
-      employee: "Alice Smith",
-      title: "Code Login Form",
-      status: "In Progress",
-      priority: "High",
-    },
-    {
-      id: "t2",
-      assignedToId: "employee456",
-      employee: "Bob Johnson",
-      title: "Design Database Schema",
-      status: "Pending",
-      priority: "High",
-    },
-    {
-      id: "t3",
-      assignedToId: "employee123",
-      employee: "Alice Smith",
-      title: "Write API Documentation",
-      status: "Pending",
-      priority: "Medium",
-    },
-    {
-      id: "t4",
-      assignedToId: "employee789",
-      employee: "Charlie Brown",
-      title: "Fix CSS Bug",
-      status: "Completed",
-      priority: "Low",
-    },
-    {
-      id: "t5",
-      assignedToId: "employee123",
-      employee: "Alice Smith",
-      title: "Research New Library",
-      status: "Completed",
-      priority: "Low",
-    },
-    {
-      id: "t6",
-      assignedToId: "employee123",
-      employee: "Alice Smith",
-      title: "Setup CI/CD Pipeline",
-      status: "Failed",
-      priority: "High",
-    },
-    {
-      id: "t7",
-      assignedToId: "employee456",
-      employee: "Bob Johnson",
-      title: "Update User Profile Page",
-      status: "In Progress",
-      priority: "Medium",
-    },
-  ];
+// This component accepts 'tasks' and 'updateTask' as props
+const MyFailedTasks = ({ tasks, updateTask }) => {
+  // --- IMPORTANT: REMOVE ALL MOCK DATA FROM HERE ---
 
-  // Filter tasks for the logged-in user and by specific status
-  const filteredTasks = allEmployeeSpecificTasks.filter(
-    (task) =>
-      task.assignedToId === loggedInUser.id &&
-      task.status.toLowerCase() === "failed"
-  );
-  // --- End of Mock Data Filtering ---
-
-  // Reuse your getStatusClasses and getPriorityClasses functions here
   const getStatusClasses = (status) => {
-    switch (status.toLowerCase()) {
-      case "pending":
-        return "bg-yellow-500";
-      case "in progress":
-        return "bg-blue-500";
-      case "completed":
-        return "bg-green-500";
+    switch (status?.toLowerCase()) {
       case "failed":
-        return "bg-red-500";
+        return "bg-red-600";
+      case "rejected":
+        return "bg-orange-600";
       default:
         return "bg-gray-500";
     }
   };
+
   const getPriorityClasses = (priority) => {
-    switch (priority.toLowerCase()) {
+    switch (priority?.toLowerCase()) {
       case "high":
         return "bg-red-700";
       case "medium":
-        return "bg-yellow-700";
+        return "bg-yellow-500 text-black";
       case "low":
-        return "bg-green-700";
+        return "bg-green-600";
       default:
-        return "bg-gray-700";
+        return "bg-gray-600";
     }
   };
 
-  const handleAction = (action, taskId) => {
-    console.log(
-      `Employee ${loggedInUser.name}: ${action} action triggered for task: ${taskId}`
-    );
-    // Implement specific actions for this status type (e.g., "View", "Start", "Complete", "Reopen", etc.)
+  const handleAction = async (action, taskId, newStatus = null) => {
+    try {
+      if (action === "View") {
+        alert(`Viewing details for task: ${taskId}`);
+      }
+      // An employee might re-open a failed task if they fix the issue,
+      // or if it was rejected by admin and needs review.
+      if (action === "UpdateStatus" && newStatus) {
+        await updateTask(taskId, { status: newStatus });
+        alert(`Task status updated to '${newStatus}'!`);
+      }
+    } catch (error) {
+      alert(`Action failed: ${error.message}`);
+    }
   };
 
   return (
     <div className="bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-700 text-white h-[500px] flex flex-col">
       <h2 className="text-3xl font-bold mb-6 text-center text-white">
-        My Failed Tasks
+        My Rejected/Failed Tasks
       </h2>
 
       <div className="hidden md:grid grid-cols-[2.5fr_1fr_1fr_1.5fr] gap-4 py-3 px-4 mb-2 bg-gray-700 rounded-lg font-semibold text-gray-300 border-b border-gray-600">
@@ -119,13 +59,13 @@ const MyFailedTasks = ({ loggedInUser }) => {
       </div>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
-        {filteredTasks.length > 0 ? (
-          filteredTasks.map((task) => (
+        {tasks && tasks.length > 0 ? (
+          tasks.map((task) => (
             <div
               key={task.id}
               className="grid grid-cols-1 md:grid-cols-[2.5fr_1fr_1fr_1.5fr] gap-4 items-center py-4 px-4 mb-3 bg-gray-700 rounded-lg
-                          hover:bg-gray-600 transition-colors duration-200 ease-in-out cursor-pointer
-                          border-b border-gray-600 last:border-b-0"
+                         hover:bg-gray-600 transition-colors duration-200 ease-in-out
+                         border-b border-gray-600 last:border-b-0"
             >
               <div className="col-span-full md:col-auto text-base font-semibold truncate text-left">
                 <span className="md:hidden font-semibold text-gray-400">
@@ -154,17 +94,19 @@ const MyFailedTasks = ({ loggedInUser }) => {
                 </span>
               </div>
 
+              {/* Employee Actions for Rejected/Failed Tasks (e.g., view, or if they can re-submit/re-open) */}
               <div className="col-span-full md:col-auto flex justify-center gap-2 mt-3 md:mt-0">
                 <button
                   onClick={() => handleAction("View", task.id)}
                   className="p-2 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors duration-200"
                   title="View Details"
                 >
+                  {/* Eye icon SVG */}
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
-                    strokeWidth={1.5}
+                    strokeWidth={2}
                     stroke="currentColor"
                     className="w-5 h-5"
                   >
@@ -180,28 +122,27 @@ const MyFailedTasks = ({ loggedInUser }) => {
                     />
                   </svg>
                 </button>
+                {/* Employee might have the option to re-open/re-submit a failed task */}
                 <button
-                  onClick={() => handleAction("Reopen", task.id)}
-                  className="p-2 rounded-full bg-orange-500 hover:bg-orange-600 transition-colors duration-200"
-                  title="Reopen Task"
+                  onClick={() =>
+                    handleAction("UpdateStatus", task.id, "in progress")
+                  } // Assume they fix and re-start
+                  className="p-2 rounded-full bg-purple-500 hover:bg-purple-600 transition-colors duration-200"
+                  title="Re-open / Re-submit Task"
                 >
+                  {/* Refresh icon SVG */}
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
-                    strokeWidth={1.5}
+                    strokeWidth={2}
                     stroke="currentColor"
                     className="w-5 h-5"
                   >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      d="M9.75 3l-1.5 1.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M15 9l-6 6M9 15l6-6"
+                      d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.181m0-2.91v-.001M15.025 2.409l4.269 4.269m-4.269 4.269V11.25m0 0h4.992m-4.993 0l3.181 3.181m0-2.91v-.001"
                     />
                   </svg>
                 </button>
@@ -210,7 +151,7 @@ const MyFailedTasks = ({ loggedInUser }) => {
           ))
         ) : (
           <p className="text-center text-gray-400 py-8">
-            No Failed tasks to display.
+            No rejected or failed tasks to display.
           </p>
         )}
       </div>

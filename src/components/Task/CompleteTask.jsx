@@ -1,53 +1,16 @@
+// src/components/Task/CompleteTask.jsx
 import React from "react";
 
-const CompleteTask = () => {
-  const completedTasks = [
-    {
-      id: "completed-task-1",
-      employee: "Rahul Singh",
-      title: "Review Backend API Documentation",
-      status: "Completed",
-      priority: "Medium",
-      dueDate: "2025-06-01",
-    },
-    {
-      id: "completed-task-2",
-      employee: "Shrey Vats",
-      title: "Deploy User Authentication Service",
-      status: "Completed",
-      priority: "High",
-      dueDate: "2025-05-28",
-    },
-    {
-      id: "completed-task-3",
-      employee: "Anjali Kumari",
-      title: "Finalize Marketing Campaign Copy",
-      status: "Completed",
-      priority: "Low",
-      dueDate: "2025-06-05",
-    },
-  ];
+// This component accepts 'tasks' and 'updateTask' as props
+const CompleteTask = ({ tasks, updateTask }) => {
+  // --- IMPORTANT: REMOVE ALL MOCK DATA FROM HERE ---
 
   const getStatusClasses = (status) => {
-    switch (status.toLowerCase()) {
-      case "pending":
-      case "new":
-        return "bg-blue-600";
-      case "in progress":
-        return "bg-purple-600";
-      case "completed":
-        return "bg-lime-600"; // Lime for completed
-      case "failed":
-        return "bg-red-600";
-      case "accepted":
-        return "bg-indigo-600";
-      default:
-        return "bg-gray-500";
-    }
+    return "bg-lime-600"; // Always completed
   };
 
   const getPriorityClasses = (priority) => {
-    switch (priority.toLowerCase()) {
+    switch (priority?.toLowerCase()) {
       case "high":
         return "bg-red-700";
       case "medium":
@@ -59,9 +22,17 @@ const CompleteTask = () => {
     }
   };
 
-  const handleAction = (action, taskId) => {
-    console.log(`${action} action triggered for task: ${taskId}`);
-    // Implement specific logic for actions like 'Archive', 'View Details'
+  const handleAction = async (action, taskId, newStatus = null) => {
+    try {
+      if (action === "UpdateStatus" && newStatus) {
+        await updateTask(taskId, { status: newStatus });
+        alert(`Task status updated to '${newStatus}'!`);
+      } else if (action === "View") {
+        alert(`Viewing details for task: ${taskId}`);
+      }
+    } catch (error) {
+      alert(`Action failed: ${error.message}`);
+    }
   };
 
   return (
@@ -70,20 +41,20 @@ const CompleteTask = () => {
         Completed Tasks
       </h2>
 
-      <div className="hidden md:grid grid-cols-[2fr_1.5fr_1fr_1.5fr] gap-4 py-3 px-4 mb-2 bg-gray-700 rounded-lg font-semibold text-gray-300 border-b border-gray-600">
+      <div className="hidden md:grid grid-cols-[2.5fr_1fr_1fr_1.5fr] gap-4 py-3 px-4 mb-2 bg-gray-700 rounded-lg font-semibold text-gray-300 border-b border-gray-600">
         <h4 className="text-left">Task Title</h4>
-        <h4 className="text-left">Assigned To</h4>
+        <h4 className="text-center">Status</h4>
         <h4 className="text-center">Priority</h4>
         <h4 className="text-center">Actions</h4>
       </div>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
-        {completedTasks.length > 0 ? (
-          completedTasks.map((task) => (
+        {tasks && tasks.length > 0 ? (
+          tasks.map((task) => (
             <div
               key={task.id}
-              className="grid grid-cols-1 md:grid-cols-[2fr_1.5fr_1fr_1.5fr] gap-4 items-center py-4 px-4 mb-3 bg-gray-700 rounded-lg
-                         hover:bg-gray-600 transition-colors duration-200 ease-in-out cursor-pointer
+              className="grid grid-cols-1 md:grid-cols-[2.5fr_1fr_1fr_1.5fr] gap-4 items-center py-4 px-4 mb-3 bg-gray-700 rounded-lg
+                         hover:bg-gray-600 transition-colors duration-200 ease-in-out
                          border-b border-gray-600 last:border-b-0"
             >
               <div className="col-span-full md:col-auto text-base font-semibold truncate text-left">
@@ -91,13 +62,6 @@ const CompleteTask = () => {
                   Task:{" "}
                 </span>
                 {task.title}
-              </div>
-
-              <div className="col-span-full md:col-auto font-medium truncate text-left">
-                <span className="md:hidden font-semibold text-gray-400">
-                  Assigned To:{" "}
-                </span>
-                {task.employee}
               </div>
 
               <div className="col-span-full md:col-auto flex justify-center md:justify-start">
@@ -120,12 +84,14 @@ const CompleteTask = () => {
                 </span>
               </div>
 
+              {/* Admin Actions for Completed Tasks (e.g., just view, or re-open) */}
               <div className="col-span-full md:col-auto flex justify-center gap-2 mt-3 md:mt-0">
                 <button
                   onClick={() => handleAction("View", task.id)}
                   className="p-2 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors duration-200"
                   title="View Details"
                 >
+                  {/* Eye icon SVG */}
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -146,26 +112,16 @@ const CompleteTask = () => {
                     />
                   </svg>
                 </button>
-                <button
-                  onClick={() => handleAction("Archive", task.id)}
-                  className="p-2 rounded-full bg-gray-600 hover:bg-gray-700 transition-colors duration-200"
-                  title="Archive Task"
+                {/* Admin might have option to re-open a completed task, for example */}
+                {/* <button
+                    onClick={() => handleAction("UpdateStatus", task.id, "in progress")}
+                    className="p-2 rounded-full bg-purple-500 hover:bg-purple-600 transition-colors duration-200"
+                    title="Re-open Task"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2}
-                    stroke="currentColor"
-                    className="w-5 h-5"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.5l3 3m0 0l3-3m-3 3V4.5m7.5 3h-3.375c-.621 0-1.125-.504-1.125-1.125V4.5c0-.621.504-1.125 1.125-1.125h3.375c.621 0 1.125.504 1.125 1.125v1.875c0 .621-.504 1.125-1.125 1.125z"
-                    />
-                  </svg>
-                </button>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.181m0-2.91v-.001M15.025 2.409l4.269 4.269m-4.269 4.269V11.25m0 0h4.992m-4.993 0l3.181 3.181m0-2.91v-.001" />
+                    </svg>
+                </button> */}
               </div>
             </div>
           ))

@@ -1,109 +1,85 @@
-import React, { useState } from "react";
+// src/components/Auth/Login.jsx
+import React, { useState, useEffect } from "react";
+import { useAuth } from "../../context/AuthContext"; // Corrected path to AuthContext
+import { useNavigate } from "react-router-dom"; // Assuming you use react-router-dom
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(""); // State for displaying login errors
+  const { login, isLoading, error, user } = useAuth(); // Destructure login function and state
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setError(""); // Clear previous errors
-
-    // Basic validation
-    if (!email || !password) {
-      setError("Please enter both email and password.");
-      return;
-    }
-
-    // In a real app, you'd send this data to your backend
-    console.log(
-      `Attempting login with: Email - ${email}, Password - ${password}`
-    );
-
-    // Simulate an API call
-    setTimeout(() => {
-      if (email === "test@example.com" && password === "password") {
-        console.log("Login successful!");
-        // Redirect or set user session here
-        setEmail("");
-        setPassword("");
-      } else {
-        setError("Invalid email or password. Please try again.");
+  // Redirect after successful login based on user role
+  useEffect(() => {
+    if (user) {
+      if (user.role === "admin") {
+        navigate("/admin-dashboard"); // Your admin dashboard route
+      } else if (user.role === "employee") {
+        navigate("/employee-dashboard"); // Your employee dashboard route
       }
-    }, 1000); // Simulate network delay
+    }
+  }, [user, navigate]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await login({ email, password }); // Call the login function from context
   };
 
   return (
-    <div className="flex h-screen w-screen items-center justify-center bg-gray-900 text-white">
-      <div className="bg-gray-800 p-10 sm:p-14 rounded-3xl shadow-2xl border border-gray-700 w-full max-w-md transform transition-all duration-300 hover:scale-[1.01]">
-        <h2 className="text-4xl font-extrabold text-center mb-8 text-white tracking-tight">
-          Welcome Back
+    <div className="min-h-screen flex items-center justify-center bg-gray-950 text-white">
+      <div className="bg-gray-800 p-8 rounded-lg shadow-xl border border-gray-700 w-full max-w-md">
+        <h2 className="text-3xl font-bold mb-6 text-center text-emerald-400">
+          Login
         </h2>
-        <p className="text-center text-gray-400 mb-8">
-          Sign in to access your employee dashboard.
-        </p>
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          <div>
+        <form onSubmit={handleSubmit}>
+          {error && (
+            <p className="bg-red-800 text-red-100 p-3 rounded mb-4 text-sm text-center">
+              {error}
+            </p>
+          )}
+          <div className="mb-4">
             <label
+              className="block text-gray-300 text-sm font-bold mb-2"
               htmlFor="email"
-              className="block text-sm font-medium text-gray-300 mb-2"
             >
-              Email Address
+              Email
             </label>
             <input
+              type="email"
               id="email"
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600"
+              placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-gray-700 border border-gray-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-white placeholder-gray-500 py-3 px-5 rounded-lg outline-none text-base transition duration-200"
-              type="email"
-              placeholder="you@example.com"
               required
-              autoComplete="email"
             />
           </div>
-
-          <div>
+          <div className="mb-6">
             <label
+              className="block text-gray-300 text-sm font-bold mb-2"
               htmlFor="password"
-              className="block text-sm font-medium text-gray-300 mb-2"
             >
               Password
             </label>
             <input
+              type="password"
               id="password"
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600"
+              placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-gray-700 border border-gray-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-white placeholder-gray-500 py-3 px-5 rounded-lg outline-none text-base transition duration-200"
-              type="password"
-              placeholder="••••••••"
               required
-              autoComplete="current-password"
             />
           </div>
-
-          {error && (
-            <p className="text-red-400 text-sm text-center -mt-2">{error}</p>
-          )}
-
-          <button
-            type="submit"
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-lg text-lg mt-3
-                       shadow-md hover:shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-75"
-          >
-            Log In
-          </button>
-
-          {/* Optional: Add links for forgot password or sign up */}
-          <p className="text-center text-gray-400 text-sm mt-6">
-            Forgot your password?{" "}
-            <a
-              href="#"
-              className="text-emerald-500 hover:text-emerald-400 font-medium transition-colors duration-200"
+          <div className="flex items-center justify-center">
+            <button
+              type="submit"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline transition duration-200"
+              disabled={isLoading}
             >
-              Reset here
-            </a>
-          </p>
+              {isLoading ? "Logging In..." : "Login"}
+            </button>
+          </div>
         </form>
       </div>
     </div>

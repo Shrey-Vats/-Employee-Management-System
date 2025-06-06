@@ -1,53 +1,25 @@
+// src/components/Task/AcceptTask.jsx
 import React from "react";
 
-const AcceptTask = () => {
-  const acceptedTasks = [
-    {
-      id: "accepted-task-1",
-      employee: "Shrey Vats",
-      title: "Develop MERN Stack E-commerce Site",
-      status: "Accepted",
-      priority: "High",
-      dueDate: "2025-07-15",
-    },
-    {
-      id: "accepted-task-2",
-      employee: "Anjali Kumari",
-      title: "Design Mobile App UI/UX Flow",
-      status: "Accepted",
-      priority: "Medium",
-      dueDate: "2025-06-25",
-    },
-    {
-      id: "accepted-task-3",
-      employee: "Priya Sharma",
-      title: "Integrate Payment Gateway Module",
-      status: "In Progress", // Can also be in progress after acceptance
-      priority: "High",
-      dueDate: "2025-07-20",
-    },
-  ];
+// This component accepts 'tasks' and 'updateTask' as props
+const AcceptTask = ({ tasks, updateTask }) => {
+  // --- IMPORTANT: REMOVE ALL MOCK DATA FROM HERE ---
+  // The 'tasks' prop already contains the filtered data.
+  // --- END REMOVAL ---
 
   const getStatusClasses = (status) => {
-    switch (status.toLowerCase()) {
-      case "pending":
-      case "new":
-        return "bg-blue-600";
+    switch (status?.toLowerCase()) {
+      case "accepted":
+        return "bg-indigo-600";
       case "in progress":
         return "bg-purple-600";
-      case "completed":
-        return "bg-lime-600";
-      case "failed":
-        return "bg-red-600";
-      case "accepted":
-        return "bg-indigo-600"; // Indigo for accepted
       default:
         return "bg-gray-500";
     }
   };
 
   const getPriorityClasses = (priority) => {
-    switch (priority.toLowerCase()) {
+    switch (priority?.toLowerCase()) {
       case "high":
         return "bg-red-700";
       case "medium":
@@ -59,32 +31,40 @@ const AcceptTask = () => {
     }
   };
 
-  const handleAction = (action, taskId) => {
-    console.log(`${action} action triggered for task: ${taskId}`);
-    // Implement specific logic for actions like 'Mark Complete', 'Revert', 'View Details'
+  const handleAction = async (action, taskId, newStatus = null) => {
+    try {
+      if (action === "UpdateStatus" && newStatus) {
+        await updateTask(taskId, { status: newStatus });
+        alert(`Task status updated to '${newStatus}'!`);
+      } else if (action === "View") {
+        // Implement view details logic here (e.g., open a modal, navigate to /task/:id)
+        alert(`Viewing details for task: ${taskId}`);
+      }
+    } catch (error) {
+      alert(`Action failed: ${error.message}`);
+    }
   };
 
   return (
     <div className="bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-700 text-white h-[500px] flex flex-col">
       <h2 className="text-3xl font-bold mb-6 text-center text-white">
-        Accepted & In-Progress Tasks
+        Accepted Tasks
       </h2>
 
-      <div className="hidden md:grid grid-cols-[2fr_1.5fr_1fr_1fr_1.5fr] gap-4 py-3 px-4 mb-2 bg-gray-700 rounded-lg font-semibold text-gray-300 border-b border-gray-600">
+      <div className="hidden md:grid grid-cols-[2.5fr_1fr_1fr_1.5fr] gap-4 py-3 px-4 mb-2 bg-gray-700 rounded-lg font-semibold text-gray-300 border-b border-gray-600">
         <h4 className="text-left">Task Title</h4>
-        <h4 className="text-left">Assigned To</h4>
         <h4 className="text-center">Status</h4>
         <h4 className="text-center">Priority</h4>
         <h4 className="text-center">Actions</h4>
       </div>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
-        {acceptedTasks.length > 0 ? (
-          acceptedTasks.map((task) => (
+        {tasks && tasks.length > 0 ? (
+          tasks.map((task) => (
             <div
               key={task.id}
-              className="grid grid-cols-1 md:grid-cols-[2fr_1.5fr_1fr_1fr_1.5fr] gap-4 items-center py-4 px-4 mb-3 bg-gray-700 rounded-lg
-                         hover:bg-gray-600 transition-colors duration-200 ease-in-out cursor-pointer
+              className="grid grid-cols-1 md:grid-cols-[2.5fr_1fr_1fr_1.5fr] gap-4 items-center py-4 px-4 mb-3 bg-gray-700 rounded-lg
+                         hover:bg-gray-600 transition-colors duration-200 ease-in-out
                          border-b border-gray-600 last:border-b-0"
             >
               <div className="col-span-full md:col-auto text-base font-semibold truncate text-left">
@@ -92,13 +72,6 @@ const AcceptTask = () => {
                   Task:{" "}
                 </span>
                 {task.title}
-              </div>
-
-              <div className="col-span-full md:col-auto font-medium truncate text-left">
-                <span className="md:hidden font-semibold text-gray-400">
-                  Assigned To:{" "}
-                </span>
-                {task.employee}
               </div>
 
               <div className="col-span-full md:col-auto flex justify-center md:justify-start">
@@ -121,12 +94,14 @@ const AcceptTask = () => {
                 </span>
               </div>
 
+              {/* Admin Actions for Accepted Tasks */}
               <div className="col-span-full md:col-auto flex justify-center gap-2 mt-3 md:mt-0">
                 <button
                   onClick={() => handleAction("View", task.id)}
                   className="p-2 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors duration-200"
                   title="View Details"
                 >
+                  {/* Eye icon SVG */}
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -147,52 +122,64 @@ const AcceptTask = () => {
                     />
                   </svg>
                 </button>
-                <button
-                  onClick={() => handleAction("Mark Complete", task.id)}
-                  className="p-2 rounded-full bg-lime-600 hover:bg-lime-700 transition-colors duration-200"
-                  title="Mark Complete"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2}
-                    stroke="currentColor"
-                    className="w-5 h-5"
+                {(task.status.toLowerCase() === "accepted" ||
+                  task.status.toLowerCase() === "in progress") && (
+                  <button
+                    onClick={() =>
+                      handleAction("UpdateStatus", task.id, "completed")
+                    }
+                    className="p-2 rounded-full bg-lime-600 hover:bg-lime-700 transition-colors duration-200"
+                    title="Mark Completed"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => handleAction("Revert", task.id)}
-                  className="p-2 rounded-full bg-orange-600 hover:bg-orange-700 transition-colors duration-200"
-                  title="Revert Status"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2}
-                    stroke="currentColor"
-                    className="w-5 h-5"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"
-                    />
-                  </svg>
-                </button>
+                    {/* Checkmark in circle icon SVG */}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2}
+                      stroke="currentColor"
+                      className="w-5 h-5"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </button>
+                )}
+                {task.status.toLowerCase() !== "completed" &&
+                  task.status.toLowerCase() !== "failed" && (
+                    <button
+                      onClick={() =>
+                        handleAction("UpdateStatus", task.id, "failed")
+                      }
+                      className="p-2 rounded-full bg-orange-600 hover:bg-orange-700 transition-colors duration-200"
+                      title="Mark Failed"
+                    >
+                      {/* Exclamation triangle icon SVG */}
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={2}
+                        stroke="currentColor"
+                        className="w-5 h-5"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M12 9v3.75m-9.303 3.376c-.866 1.5.38 3.375 2.07 3.375h14.006c1.69 0 2.936-1.875 2.07-3.375L12.72 4.5C12.381 3.829 11.619 3.829 11.28 4.5L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+                        />
+                      </svg>
+                    </button>
+                  )}
               </div>
             </div>
           ))
         ) : (
           <p className="text-center text-gray-400 py-8">
-            No accepted or in-progress tasks to display.
+            No accepted tasks to display.
           </p>
         )}
       </div>

@@ -1,108 +1,38 @@
 // src/components/TaskUser/MyInProgressTasks.jsx
 import React from "react";
 
-const MyInProgressTasks = ({ loggedInUser }) => {
-  // --- Your complete mock data for all employee tasks ---
-  const allEmployeeSpecificTasks = [
-    {
-      id: "t1",
-      assignedToId: "employee123",
-      employee: "Alice Smith",
-      title: "Code Login Form",
-      status: "In Progress",
-      priority: "High",
-    },
-    {
-      id: "t2",
-      assignedToId: "employee456",
-      employee: "Bob Johnson",
-      title: "Design Database Schema",
-      status: "Pending",
-      priority: "High",
-    },
-    {
-      id: "t3",
-      assignedToId: "employee123",
-      employee: "Alice Smith",
-      title: "Write API Documentation",
-      status: "Pending",
-      priority: "Medium",
-    },
-    {
-      id: "t4",
-      assignedToId: "employee789",
-      employee: "Charlie Brown",
-      title: "Fix CSS Bug",
-      status: "Completed",
-      priority: "Low",
-    },
-    {
-      id: "t5",
-      assignedToId: "employee123",
-      employee: "Alice Smith",
-      title: "Research New Library",
-      status: "Completed",
-      priority: "Low",
-    },
-    {
-      id: "t6",
-      assignedToId: "employee123",
-      employee: "Alice Smith",
-      title: "Setup CI/CD Pipeline",
-      status: "Failed",
-      priority: "High",
-    },
-    {
-      id: "t7",
-      assignedToId: "employee456",
-      employee: "Bob Johnson",
-      title: "Update User Profile Page",
-      status: "In Progress",
-      priority: "Medium",
-    },
-  ];
+// This component accepts 'tasks' and 'updateTask' as props
+const MyInProgressTasks = ({ tasks, updateTask }) => {
+  // --- IMPORTANT: REMOVE ALL MOCK DATA FROM HERE ---
 
-  // Filter tasks for the logged-in user and by specific status
-  const filteredTasks = allEmployeeSpecificTasks.filter(
-    (task) =>
-      task.assignedToId === loggedInUser.id &&
-      task.status.toLowerCase() === "in progress"
-  );
-  // --- End of Mock Data Filtering ---
-
-  // Reuse your getStatusClasses and getPriorityClasses functions here
   const getStatusClasses = (status) => {
-    switch (status.toLowerCase()) {
-      case "pending":
-        return "bg-yellow-500";
-      case "in progress":
-        return "bg-blue-500";
-      case "completed":
-        return "bg-green-500";
-      case "failed":
-        return "bg-red-500";
-      default:
-        return "bg-gray-500";
-    }
+    return "bg-purple-600"; // Always in progress
   };
+
   const getPriorityClasses = (priority) => {
-    switch (priority.toLowerCase()) {
+    switch (priority?.toLowerCase()) {
       case "high":
         return "bg-red-700";
       case "medium":
-        return "bg-yellow-700";
+        return "bg-yellow-500 text-black";
       case "low":
-        return "bg-green-700";
+        return "bg-green-600";
       default:
-        return "bg-gray-700";
+        return "bg-gray-600";
     }
   };
 
-  const handleAction = (action, taskId) => {
-    console.log(
-      `Employee ${loggedInUser.name}: ${action} action triggered for task: ${taskId}`
-    );
-    // Implement specific actions for this status type (e.g., "View", "Start", "Complete", "Reopen", etc.)
+  const handleAction = async (action, taskId, newStatus = null) => {
+    try {
+      if (action === "UpdateStatus" && newStatus) {
+        await updateTask(taskId, { status: newStatus });
+        alert(`Task status updated to '${newStatus}'!`);
+      } else if (action === "View") {
+        alert(`Viewing details for task: ${taskId}`);
+      }
+    } catch (error) {
+      alert(`Action failed: ${error.message}`);
+    }
   };
 
   return (
@@ -119,13 +49,13 @@ const MyInProgressTasks = ({ loggedInUser }) => {
       </div>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
-        {filteredTasks.length > 0 ? (
-          filteredTasks.map((task) => (
+        {tasks && tasks.length > 0 ? (
+          tasks.map((task) => (
             <div
               key={task.id}
               className="grid grid-cols-1 md:grid-cols-[2.5fr_1fr_1fr_1.5fr] gap-4 items-center py-4 px-4 mb-3 bg-gray-700 rounded-lg
-                          hover:bg-gray-600 transition-colors duration-200 ease-in-out cursor-pointer
-                          border-b border-gray-600 last:border-b-0"
+                         hover:bg-gray-600 transition-colors duration-200 ease-in-out
+                         border-b border-gray-600 last:border-b-0"
             >
               <div className="col-span-full md:col-auto text-base font-semibold truncate text-left">
                 <span className="md:hidden font-semibold text-gray-400">
@@ -154,17 +84,19 @@ const MyInProgressTasks = ({ loggedInUser }) => {
                 </span>
               </div>
 
+              {/* Employee Actions for In Progress Tasks */}
               <div className="col-span-full md:col-auto flex justify-center gap-2 mt-3 md:mt-0">
                 <button
                   onClick={() => handleAction("View", task.id)}
                   className="p-2 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors duration-200"
                   title="View Details"
                 >
+                  {/* Eye icon SVG */}
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
-                    strokeWidth={1.5}
+                    strokeWidth={2}
                     stroke="currentColor"
                     className="w-5 h-5"
                   >
@@ -181,15 +113,18 @@ const MyInProgressTasks = ({ loggedInUser }) => {
                   </svg>
                 </button>
                 <button
-                  onClick={() => handleAction("Complete", task.id)}
-                  className="p-2 rounded-full bg-green-500 hover:bg-green-600 transition-colors duration-200"
-                  title="Complete Task"
+                  onClick={() =>
+                    handleAction("UpdateStatus", task.id, "completed")
+                  }
+                  className="p-2 rounded-full bg-lime-600 hover:bg-lime-700 transition-colors duration-200"
+                  title="Mark Complete"
                 >
+                  {/* Checkmark in circle icon SVG */}
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
-                    strokeWidth={1.5}
+                    strokeWidth={2}
                     stroke="currentColor"
                     className="w-5 h-5"
                   >
@@ -200,12 +135,35 @@ const MyInProgressTasks = ({ loggedInUser }) => {
                     />
                   </svg>
                 </button>
+                <button
+                  onClick={() =>
+                    handleAction("UpdateStatus", task.id, "failed")
+                  }
+                  className="p-2 rounded-full bg-red-600 hover:bg-red-700 transition-colors duration-200"
+                  title="Mark Failed / Report Issue"
+                >
+                  {/* Exclamation triangle icon SVG */}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                    className="w-5 h-5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 9v3.75m-9.303 3.376c-.866 1.5.38 3.375 2.07 3.375h14.006c1.69 0 2.936-1.875 2.07-3.375L12.72 4.5C12.381 3.829 11.619 3.829 11.28 4.5L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+                    />
+                  </svg>
+                </button>
               </div>
             </div>
           ))
         ) : (
           <p className="text-center text-gray-400 py-8">
-            No In Progress tasks to display.
+            No tasks in progress.
           </p>
         )}
       </div>

@@ -1,108 +1,37 @@
 // src/components/TaskUser/MyCompletedTasks.jsx
 import React from "react";
 
-const MyCompletedTasks = ({ loggedInUser }) => {
-  // --- Your complete mock data for all employee tasks ---
-  const allEmployeeSpecificTasks = [
-    {
-      id: "t1",
-      assignedToId: "employee123",
-      employee: "Alice Smith",
-      title: "Code Login Form",
-      status: "In Progress",
-      priority: "High",
-    },
-    {
-      id: "t2",
-      assignedToId: "employee456",
-      employee: "Bob Johnson",
-      title: "Design Database Schema",
-      status: "Pending",
-      priority: "High",
-    },
-    {
-      id: "t3",
-      assignedToId: "employee123",
-      employee: "Alice Smith",
-      title: "Write API Documentation",
-      status: "Pending",
-      priority: "Medium",
-    },
-    {
-      id: "t4",
-      assignedToId: "employee789",
-      employee: "Charlie Brown",
-      title: "Fix CSS Bug",
-      status: "Completed",
-      priority: "Low",
-    },
-    {
-      id: "t5",
-      assignedToId: "employee123",
-      employee: "Alice Smith",
-      title: "Research New Library",
-      status: "Completed",
-      priority: "Low",
-    },
-    {
-      id: "t6",
-      assignedToId: "employee123",
-      employee: "Alice Smith",
-      title: "Setup CI/CD Pipeline",
-      status: "Failed",
-      priority: "High",
-    },
-    {
-      id: "t7",
-      assignedToId: "employee456",
-      employee: "Bob Johnson",
-      title: "Update User Profile Page",
-      status: "In Progress",
-      priority: "Medium",
-    },
-  ];
+// This component accepts 'tasks' and 'updateTask' as props
+const MyCompletedTasks = ({ tasks, updateTask }) => {
+  // --- IMPORTANT: REMOVE ALL MOCK DATA FROM HERE ---
 
-  // Filter tasks for the logged-in user and by specific status
-  const filteredTasks = allEmployeeSpecificTasks.filter(
-    (task) =>
-      task.assignedToId === loggedInUser.id &&
-      task.status.toLowerCase() === "completed"
-  );
-  // --- End of Mock Data Filtering ---
-
-  // Reuse your getStatusClasses and getPriorityClasses functions here
   const getStatusClasses = (status) => {
-    switch (status.toLowerCase()) {
-      case "pending":
-        return "bg-yellow-500";
-      case "in progress":
-        return "bg-blue-500";
-      case "completed":
-        return "bg-green-500";
-      case "failed":
-        return "bg-red-500";
-      default:
-        return "bg-gray-500";
-    }
+    return "bg-lime-600"; // Always completed
   };
+
   const getPriorityClasses = (priority) => {
-    switch (priority.toLowerCase()) {
+    switch (priority?.toLowerCase()) {
       case "high":
         return "bg-red-700";
       case "medium":
-        return "bg-yellow-700";
+        return "bg-yellow-500 text-black";
       case "low":
-        return "bg-green-700";
+        return "bg-green-600";
       default:
-        return "bg-gray-700";
+        return "bg-gray-600";
     }
   };
 
-  const handleAction = (action, taskId) => {
-    console.log(
-      `Employee ${loggedInUser.name}: ${action} action triggered for task: ${taskId}`
-    );
-    // Implement specific actions for this status type (e.g., "View", "Start", "Complete", "Reopen", etc.)
+  const handleAction = async (action, taskId, newStatus = null) => {
+    try {
+      if (action === "View") {
+        alert(`Viewing details for task: ${taskId}`);
+      }
+      // Employees typically won't re-open completed tasks, but admin might.
+      // If you need an employee to re-open, add the UpdateStatus action here.
+    } catch (error) {
+      alert(`Action failed: ${error.message}`);
+    }
   };
 
   return (
@@ -119,13 +48,13 @@ const MyCompletedTasks = ({ loggedInUser }) => {
       </div>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
-        {filteredTasks.length > 0 ? (
-          filteredTasks.map((task) => (
+        {tasks && tasks.length > 0 ? (
+          tasks.map((task) => (
             <div
               key={task.id}
               className="grid grid-cols-1 md:grid-cols-[2.5fr_1fr_1fr_1.5fr] gap-4 items-center py-4 px-4 mb-3 bg-gray-700 rounded-lg
-                          hover:bg-gray-600 transition-colors duration-200 ease-in-out cursor-pointer
-                          border-b border-gray-600 last:border-b-0"
+                         hover:bg-gray-600 transition-colors duration-200 ease-in-out
+                         border-b border-gray-600 last:border-b-0"
             >
               <div className="col-span-full md:col-auto text-base font-semibold truncate text-left">
                 <span className="md:hidden font-semibold text-gray-400">
@@ -154,17 +83,19 @@ const MyCompletedTasks = ({ loggedInUser }) => {
                 </span>
               </div>
 
+              {/* Employee Actions for Completed Tasks (mostly view) */}
               <div className="col-span-full md:col-auto flex justify-center gap-2 mt-3 md:mt-0">
                 <button
                   onClick={() => handleAction("View", task.id)}
                   className="p-2 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors duration-200"
                   title="View Details"
                 >
+                  {/* Eye icon SVG */}
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
-                    strokeWidth={1.5}
+                    strokeWidth={2}
                     stroke="currentColor"
                     className="w-5 h-5"
                   >
@@ -180,37 +111,12 @@ const MyCompletedTasks = ({ loggedInUser }) => {
                     />
                   </svg>
                 </button>
-                <button
-                  onClick={() => handleAction("Reopen", task.id)}
-                  className="p-2 rounded-full bg-orange-500 hover:bg-orange-600 transition-colors duration-200"
-                  title="Reopen Task"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className="w-5 h-5"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M9.75 3l-1.5 1.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M15 9l-6 6M9 15l6-6"
-                    />
-                  </svg>
-                </button>
               </div>
             </div>
           ))
         ) : (
           <p className="text-center text-gray-400 py-8">
-            No Completed tasks to display.
+            No completed tasks to display.
           </p>
         )}
       </div>

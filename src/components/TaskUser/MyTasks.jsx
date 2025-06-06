@@ -1,96 +1,35 @@
 // src/components/TaskUser/MyTasks.jsx
 import React from "react";
 
-const MyTasks = ({ loggedInUser }) => {
-  // --- IMPORTANT: This is your mock data. In a real application,
-  // you would fetch tasks specifically assigned to `loggedInUser.id` from your API. ---
-  const allEmployeeSpecificTasks = [
-    {
-      id: "t1",
-      assignedToId: "employee123",
-      employee: "Alice Smith",
-      title: "Code Login Form",
-      status: "In Progress",
-      priority: "High",
-    },
-    {
-      id: "t2",
-      assignedToId: "employee456",
-      employee: "Bob Johnson",
-      title: "Design Database Schema",
-      status: "Pending",
-      priority: "High",
-    },
-    {
-      id: "t3",
-      assignedToId: "employee123",
-      employee: "Alice Smith",
-      title: "Write API Documentation",
-      status: "Pending",
-      priority: "Medium",
-    },
-    {
-      id: "t4",
-      assignedToId: "employee789",
-      employee: "Charlie Brown",
-      title: "Fix CSS Bug",
-      status: "Completed",
-      priority: "Low",
-    },
-    {
-      id: "t5",
-      assignedToId: "employee123",
-      employee: "Alice Smith",
-      title: "Research New Library",
-      status: "Completed",
-      priority: "Low",
-    },
-    {
-      id: "t6",
-      assignedToId: "employee123",
-      employee: "Alice Smith",
-      title: "Setup CI/CD Pipeline",
-      status: "Failed",
-      priority: "High",
-    },
-    {
-      id: "t7",
-      assignedToId: "employee456",
-      employee: "Bob Johnson",
-      title: "Update User Profile Page",
-      status: "In Progress",
-      priority: "Medium",
-    },
-  ];
-
-  // Filter tasks specifically for the logged-in user
-  // This is the core logic for user-specific views
-  const myTasks = allEmployeeSpecificTasks.filter(
-    (task) => task.assignedToId === loggedInUser.id
-  );
-  // --- END OF MOCK DATA FILTERING ---
+// This component now accepts 'tasks' and 'updateTask' as props
+const MyTasks = ({ tasks, updateTask }) => {
+  // --- IMPORTANT: REMOVE ALL MOCK DATA FROM HERE ---
+  // The 'tasks' prop already contains the filtered data.
+  // --- END REMOVAL ---
 
   const getStatusClasses = (status) => {
-    switch (status.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case "pending":
         return "bg-blue-600";
+      case "new":
+        return "bg-blue-600";
+      case "accepted":
+        return "bg-indigo-600";
       case "in progress":
         return "bg-purple-600";
       case "completed":
         return "bg-lime-600";
       case "failed":
         return "bg-red-600";
-      case "accepted":
-        return "bg-indigo-600";
-      case "new":
-        return "bg-blue-600";
+      case "rejected":
+        return "bg-orange-600";
       default:
         return "bg-gray-500";
     }
   };
 
   const getPriorityClasses = (priority) => {
-    switch (priority.toLowerCase()) {
+    switch (priority?.toLowerCase()) {
       case "high":
         return "bg-red-700";
       case "medium":
@@ -102,11 +41,18 @@ const MyTasks = ({ loggedInUser }) => {
     }
   };
 
-  const handleAction = (action, taskId) => {
-    console.log(
-      `Employee ${loggedInUser.name}: ${action} action triggered for task: ${taskId}`
-    );
-    // Implement employee-specific actions here (e.g., mark as complete, view details, report issue)
+  const handleAction = async (action, taskId, newStatus = null) => {
+    try {
+      if (action === "UpdateStatus" && newStatus) {
+        await updateTask(taskId, { status: newStatus });
+        alert(`Task status updated to '${newStatus}'!`);
+      } else if (action === "View") {
+        // Implement view details logic here (e.g., open a modal, navigate to /task/:id)
+        alert(`Viewing details for task: ${taskId}`);
+      }
+    } catch (error) {
+      alert(`Action failed: ${error.message}`);
+    }
   };
 
   return (
@@ -115,7 +61,6 @@ const MyTasks = ({ loggedInUser }) => {
         My All Tasks
       </h2>
 
-      {/* Header for employee task list */}
       <div className="hidden md:grid grid-cols-[2.5fr_1fr_1fr_1.5fr] gap-4 py-3 px-4 mb-2 bg-gray-700 rounded-lg font-semibold text-gray-300 border-b border-gray-600">
         <h4 className="text-left">Task Title</h4>
         <h4 className="text-center">Status</h4>
@@ -123,17 +68,15 @@ const MyTasks = ({ loggedInUser }) => {
         <h4 className="text-center">Actions</h4>
       </div>
 
-      {/* Task List - Scrollable Body */}
       <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
-        {myTasks.length > 0 ? (
-          myTasks.map((task) => (
+        {tasks && tasks.length > 0 ? (
+          tasks.map((task) => (
             <div
               key={task.id}
               className="grid grid-cols-1 md:grid-cols-[2.5fr_1fr_1fr_1.5fr] gap-4 items-center py-4 px-4 mb-3 bg-gray-700 rounded-lg
-                         hover:bg-gray-600 transition-colors duration-200 ease-in-out cursor-pointer
+                         hover:bg-gray-600 transition-colors duration-200 ease-in-out
                          border-b border-gray-600 last:border-b-0"
             >
-              {/* Task Title */}
               <div className="col-span-full md:col-auto text-base font-semibold truncate text-left">
                 <span className="md:hidden font-semibold text-gray-400">
                   Task:{" "}
@@ -141,7 +84,6 @@ const MyTasks = ({ loggedInUser }) => {
                 {task.title}
               </div>
 
-              {/* Status Badge */}
               <div className="col-span-full md:col-auto flex justify-center md:justify-start">
                 <span
                   className={`text-xs font-semibold px-3 py-1 rounded-full text-white ${getStatusClasses(
@@ -152,7 +94,6 @@ const MyTasks = ({ loggedInUser }) => {
                 </span>
               </div>
 
-              {/* Priority Badge */}
               <div className="col-span-full md:col-auto flex justify-center md:justify-start">
                 <span
                   className={`text-xs font-semibold px-3 py-1 rounded-full text-white ${getPriorityClasses(
@@ -163,13 +104,14 @@ const MyTasks = ({ loggedInUser }) => {
                 </span>
               </div>
 
-              {/* Actions */}
+              {/* Employee Actions for MyTasks */}
               <div className="col-span-full md:col-auto flex justify-center gap-2 mt-3 md:mt-0">
                 <button
                   onClick={() => handleAction("View", task.id)}
                   className="p-2 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors duration-200"
                   title="View Details"
                 >
+                  {/* Eye icon SVG */}
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -191,12 +133,16 @@ const MyTasks = ({ loggedInUser }) => {
                   </svg>
                 </button>
                 {/* Conditional Employee Actions based on task status */}
-                {task.status.toLowerCase() === "pending" && (
+                {(task.status.toLowerCase() === "new" ||
+                  task.status.toLowerCase() === "pending") && (
                   <button
-                    onClick={() => handleAction("Start Task", task.id)}
+                    onClick={() =>
+                      handleAction("UpdateStatus", task.id, "in progress")
+                    } // Employee starts the task
                     className="p-2 rounded-full bg-purple-500 hover:bg-purple-600 transition-colors duration-200"
                     title="Start Task"
                   >
+                    {/* Play icon SVG */}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
@@ -216,10 +162,13 @@ const MyTasks = ({ loggedInUser }) => {
                 {(task.status.toLowerCase() === "in progress" ||
                   task.status.toLowerCase() === "accepted") && (
                   <button
-                    onClick={() => handleAction("Complete Task", task.id)}
+                    onClick={() =>
+                      handleAction("UpdateStatus", task.id, "completed")
+                    }
                     className="p-2 rounded-full bg-lime-600 hover:bg-lime-700 transition-colors duration-200"
                     title="Mark Complete"
                   >
+                    {/* Checkmark in circle icon SVG */}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
@@ -237,12 +186,16 @@ const MyTasks = ({ loggedInUser }) => {
                   </button>
                 )}
                 {task.status.toLowerCase() !== "completed" &&
-                  task.status.toLowerCase() !== "failed" && (
+                  task.status.toLowerCase() !== "failed" &&
+                  task.status.toLowerCase() !== "rejected" && (
                     <button
-                      onClick={() => handleAction("Report Issue", task.id)}
+                      onClick={() =>
+                        handleAction("UpdateStatus", task.id, "failed")
+                      } // Employee reports issue / marks as failed
                       className="p-2 rounded-full bg-red-600 hover:bg-red-700 transition-colors duration-200"
                       title="Report Issue / Mark Failed"
                     >
+                      {/* Exclamation triangle icon SVG */}
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
