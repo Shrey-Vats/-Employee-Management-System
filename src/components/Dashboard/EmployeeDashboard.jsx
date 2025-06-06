@@ -7,7 +7,7 @@ import MyTasks from "../TaskUser/MyTasks";
 import MyPendingTasks from "../TaskUser/MyPendingTasks";
 import MyInProgressTasks from "../TaskUser/MyInProgressTasks";
 import MyCompletedTasks from "../TaskUser/MyCompletedTasks";
-import MyRejectedTasks from "../TaskUser/MyRejectedTasks"; // Or MyFailedTasks
+import MyFailedTasks from "../TaskUser/MyFailedTasks"; // If you want to keep this as well
 
 // Import useAuth and useTasks hooks
 import { useAuth } from "../../context/AuthContext";
@@ -119,10 +119,10 @@ const EmployeeDashboard = () => {
           Completed
         </button>
         <button
-          onClick={() => setActiveTab("myRejectedTasks")}
+          onClick={() => setActiveTab("MyFailedTasks")}
           className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium text-sm sm:text-lg transition-colors duration-200
             ${
-              activeTab === "myRejectedTasks"
+              activeTab === "MyFailedTasks"
                 ? "bg-emerald-600 hover:bg-emerald-700"
                 : "bg-gray-700 hover:bg-gray-600"
             }`}
@@ -145,8 +145,8 @@ const EmployeeDashboard = () => {
         {activeTab === "myCompletedTasks" && (
           <MyCompletedTasks tasks={completedTasks} updateTask={updateTask} />
         )}
-        {activeTab === "myRejectedTasks" && (
-          <MyRejectedTasks
+        {activeTab === "MyFailedTasks" && (
+          <MyFailedTasks
             tasks={failedTasks || rejectedTasks}
             updateTask={updateTask}
           />
