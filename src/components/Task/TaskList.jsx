@@ -1,87 +1,79 @@
 import React from "react";
+import TaskCard from "./TaskCard"; // Ensure this path is correct based on where you save TaskCard.jsx
 
 const TaskList = () => {
+  // Sample dynamic task data
+  const tasks = [
+    {
+      id: "task-1",
+      title: "Develop MERN Stack E-commerce Site",
+      description:
+        "Build a fully functional e-commerce platform using MERN stack, including user authentication, product catalog, shopping cart, and payment gateway integration.",
+      priority: "High",
+      status: "In Progress",
+      dueDate: "15 July 2025",
+      assignedTo: "Shrey Vats",
+    },
+    {
+      id: "task-2",
+      title: "Design Mobile App UI/UX Flow",
+      description:
+        "Create wireframes and high-fidelity mockups for the new mobile application, focusing on user experience and intuitive navigation for the onboarding process.",
+      priority: "High",
+      status: "Pending",
+      dueDate: "25 June 2025",
+      assignedTo: "User Design",
+    },
+    {
+      id: "task-3",
+      title: "Refactor Database Schema for Performance",
+      description:
+        "Optimize existing database schema to improve query performance and scalability. This includes indexing, normalization review, and potential denormalization strategies.",
+      priority: "Medium",
+      status: "Accepted",
+      dueDate: "10 July 2025",
+      assignedTo: "Database Admin",
+    },
+    {
+      id: "task-4",
+      title: "Prepare Q2 Financial Report",
+      description:
+        "Compile all financial data for the second quarter, prepare balance sheets, income statements, and cash flow reports for executive review.",
+      priority: "High",
+      status: "Completed",
+      dueDate: "30 May 2025", // Past date, indicating completion
+      assignedTo: "Finance Team",
+    },
+    {
+      id: "task-5",
+      title: "Onboard New Marketing Interns",
+      description:
+        "Conduct orientation sessions, provide necessary tools and access, and assign initial training tasks for the new marketing interns joining this week.",
+      priority: "Low",
+      status: "In Progress",
+      dueDate: "10 June 2025",
+      assignedTo: "HR Department",
+    },
+    {
+      id: "task-6",
+      title: "Fix Critical Bug in Authentication Module",
+      description:
+        "Address and resolve the reported critical bug in the user authentication module causing intermittent login failures for a subset of users.",
+      priority: "High",
+      status: "Failed", // Example of a failed task
+      dueDate: "01 June 2025",
+      assignedTo: "Dev Team",
+    },
+  ];
+
   return (
     <div
       id="tasklist"
-      className="h-[50%] overflow-x-auto flex items-center justify-start gap-5 flex-nowrap w-full mt-10  py-5"
+      className="flex items-stretch gap-6 mt-10 pb-6 pr-2 overflow-x-auto custom-scrollbar" // Added custom-scrollbar for a sleeker scrollbar
     >
-      <div className="flex-shrink-0 h-full w-[300px] bg-r rounded-xl bg-blue-500 p-5">
-        <div className="flex justify-between items-center">
-          <h3 className="bg-red-700 text-sm py-1 px-3 rounded-md text-white">
-            high
-          </h3>
-          <h4 className="text-sm">4 June 2025</h4>
-        </div>
-        <h2 className="text-2xl font-bold mt-5">Do a mern project</h2>
-        <p className="text-sm mt-2">
-          Lorem ipsum dolor sit, amet consectetur adipisicing elit. Repudiandae
-          dignissimos fugiat adipisci. Iste quibusdam voluptates delectus
-          doloribus ut dolorem quasi?.
-        </p>
-      </div>
-
-      <div className="flex-shrink-0 h-full w-[300px] bg-r bg-lime-600 rounded-xl p-5">
-        <div className="flex justify-between items-center">
-          <h3 className="bg-red-700 text-sm py-1 px-3 rounded-md text-white">
-            high
-          </h3>
-          <h4 className="text-sm">4 June 2025</h4>
-        </div>
-        <h2 className="text-2xl font-bold mt-5">Do a mern project</h2>
-        <p className="text-sm mt-2">
-          Lorem ipsum dolor sit, amet consectetur adipisicing elit. Repudiandae
-          dignissimos fugiat adipisci. Iste quibusdam voluptates delectus
-          doloribus ut dolorem quasi?.
-        </p>
-      </div>
-
-      <div className="flex-shrink-0 h-full w-[300px] bg-yellow-500 bg-r rounded-xl p-5">
-        <div className="flex justify-between items-center">
-          <h3 className="bg-red-700 text-sm py-1 px-3 rounded-md text-white">
-            high
-          </h3>
-          <h4 className="text-sm">4 June 2025</h4>
-        </div>
-
-        <h2 className="text-2xl font-bold mt-5 text-black">Do a mern project</h2>
-        <p className="text-sm mt-2 text-black">
-          Lorem ipsum dolor sit, amet consectetur adipisicing elit. Repudiandae
-          dignissimos fugiat adipisci. Iste quibusdam voluptates delectus
-          doloribus ut dolorem quasi?.
-        </p>
-      </div>
-
-      <div className="flex-shrink-0 h-full w-[300px] bg-orange-500 bg-r rounded-xl p-5">
-        <div className="flex justify-between items-center">
-          <h3 className="bg-red-700 text-sm py-1 px-3 rounded-md text-white">
-            high
-          </h3>
-          <h4 className="text-sm">4 June 2025</h4>
-        </div>
-
-        <h2 className="text-2xl font-bold mt-5">Do a mern project</h2>
-        <p className="text-sm mt-2">
-          Lorem ipsum dolor sit, amet consectetur adipisicing elit. Repudiandae
-          dignissimos fugiat adipisci. Iste quibusdam voluptates delectus
-          doloribus ut dolorem quasi?.
-        </p>
-      </div>
-      <div className="flex-shrink-0 h-full w-[300px] bg-blue-500 bg-r rounded-xl p-5">
-        <div className="flex justify-between items-center">
-          <h3 className="bg-red-700 text-sm py-1 px-3 rounded-md text-white">
-            high
-          </h3>
-          <h4 className="text-sm">4 June 2025</h4>
-        </div>
-
-        <h2 className="text-2xl font-bold mt-5">Do a mern project</h2>
-        <p className="text-sm mt-2">
-          Lorem ipsum dolor sit, amet consectetur adipisicing elit. Repudiandae
-          dignissimos fugiat adipisci. Iste quibusdam voluptates delectus
-          doloribus ut dolorem quasi?.
-        </p>
-      </div>
+      {tasks.map((task) => (
+        <TaskCard key={task.id} task={task} />
+      ))}
     </div>
   );
 };
