@@ -1,67 +1,102 @@
 // src/context/AuthContext.jsx
 import React, { createContext, useState, useEffect, useContext } from "react";
-// Assuming api.js will be created in src/utils/
-import api from "../utils/api";
+import { loginUser, registerUser } from "../utils/api";
 
-// Create the Auth Context
 export const AuthContext = createContext();
 
-// Create the Auth Provider Component
 export const AuthContextProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // Stores authenticated user data (e.g., id, name, role, token)
-  const [isLoading, setIsLoading] = useState(true); // Tracks if authentication is in progress (e.g., during initial load)
-  const [error, setError] = useState(null); // Stores authentication-related errors
-
-  // Effect to check for stored token/user data on initial load
-  useEffect(() => {
-    const loadUserFromLocalStorage = async () => {
-      const token = localStorage.getItem("authToken");
+  // Initialize user from localStorage if exists
+  const [user, setUser] = useState(() => {
+    try {
       const storedUserData = localStorage.getItem("userData");
-
-      if (token && storedUserData) {
-        try {
-          const parsedUserData = JSON.parse(storedUserData);
-          // In a real app, you might want to call a backend endpoint to verify the token's validity
-          // and get the latest user data to prevent stale information.
-          // For now, we'll assume the stored data is valid.
-          setUser({ ...parsedUserData, token });
-        } catch (err) {
-          console.error("Failed to parse user data from localStorage:", err);
-          // Clear invalid data if parsing fails
-          localStorage.removeItem("authToken");
-          localStorage.removeItem("userData");
-          setUser(null);
-          setError("Failed to restore session. Please log in again.");
-        }
+      const storedToken = localStorage.getItem("authToken");
+      if (storedUserData && storedToken) {
+        return { ...JSON.parse(storedUserData), token: storedToken };
       }
-      setIsLoading(false); // Authentication check is complete
-    };
+    } catch (error) {
+      console.error("Failed to parse user data from localStorage:", error);
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("userData");
+    }
+    return null;
+  });
 
-    loadUserFromLocalStorage();
-  }, []); // Empty dependency array means this runs only once on mount
+  const [isLoading, setIsLoading] = useState(false); // Changed default to false, as initial load is handled by useState init
+  const [error, setError] = useState(null);
+
+  // No need for separate useEffect for loading from localStorage if handled in useState init
+  // You might want a useEffect for re-validating the token on app load if needed
+  useEffect(() => {
+    // If you want to verify the token with backend on each app load:
+    // This is optional but good for ensuring token validity and refreshing if needed
+    const verifyToken = async () => {
+      setIsLoading(true);
+      try {
+        if (user && user.token) {
+          // You would need a new API endpoint for token verification on the backend
+          // For example: await api.verifyToken(user.token);
+          // If verification fails, clear user.
+        }
+      } catch (err) {
+        console.error("Token verification failed:", err);
+        logout(); // Log out if token is invalid
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    if (user) {
+      verifyToken();
+    } else {
+      setIsLoading(false); // If no user, immediately stop loading
+    }
+  }, []);
 
   // Login function
   const login = async (credentials) => {
     setIsLoading(true);
-    setError(null); // Clear previous errors
+    setError(null);
     try {
-      // Replace with your actual login API call
-      // Example: Your backend might be at http://localhost:5000/api/auth/login
-      const response = await api.post("/auth/login", credentials);
-      const { token, user: userData } = response.data; // Assuming your API returns { token, user: {id, name, role} }
+      const response = await loginUser(credentials.email, credentials.password);
+      const { token, user: userData } = response; // Backend now returns token and user
 
       localStorage.setItem("authToken", token);
-      localStorage.setItem("userData", JSON.stringify(userData)); // Store user data for persistence
-      setUser({ ...userData, token }); // Update context state
+      localStorage.setItem("userData", JSON.stringify(userData));
+      setUser({ ...userData, token }); // Store user data and token in state
     } catch (err) {
-      console.error("Login failed:", err.response?.data || err.message);
-      setError(
-        err.response?.data?.message ||
-          "Login failed. Please check your credentials."
-      );
-      setUser(null); // Clear user on failure
-      localStorage.removeItem("authToken"); // Ensure no stale token remains
+      console.error("Login failed:", err);
+      setError(err.message || "Login failed. Please check your credentials.");
+      setUser(null);
+      localStorage.removeItem("authToken");
       localStorage.removeItem("userData");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Register function
+  const register = async (credentials) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await registerUser(
+        credentials.email,
+        credentials.password,
+        credentials.role
+      );
+      // After registration, you might want to automatically log them in
+      // or redirect to login page. For simplicity, let's just set the user for now.
+      const { user: userData } = response; // Assuming backend returns user data after registration
+      // If backend also returns a token on register, capture it here too
+      // const { token, user: userData } = response;
+      setUser(userData); // Set user state (without token if register doesn't provide one)
+      // localStorage.setItem("userData", JSON.stringify(userData)); // Optional: store registration data
+      // If you want to log in immediately after register:
+      // await loginUser(credentials.email, credentials.password); // Call login to get token and set state
+      return response; // Return response for navigation
+    } catch (err) {
+      console.error("Registration failed:", err);
+      setError(err.message || "Registration failed. Please try again.");
+      throw err; // Re-throw to be caught by the component
     } finally {
       setIsLoading(false);
     }
@@ -71,21 +106,18 @@ export const AuthContextProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem("authToken");
     localStorage.removeItem("userData");
-    setUser(null); // Clear user state
-    setError(null); // Clear any existing errors
-    // Optional: Call backend logout API to invalidate token on server-side if applicable
-    // api.post('/auth/logout');
+    setUser(null);
+    setError(null);
   };
 
-  // The value that will be provided to consumers of this context
   const authContextValue = {
     user,
     isLoading,
     error,
     login,
+    register, // Expose register function
     logout,
-    isAuthenticated: !!user, // Convenience flag: true if user object exists
-    // Determine user role (e.g., 'admin', 'employee') for conditional rendering
+    isAuthenticated: !!user && !!user.token, // Check if user and token exist
     isAdmin: user && user.role === "admin",
     isEmployee: user && user.role === "employee",
   };
@@ -97,7 +129,6 @@ export const AuthContextProvider = ({ children }) => {
   );
 };
 
-// Custom hook to consume the AuthContext easily
 export const useAuth = () => {
   return useContext(AuthContext);
 };

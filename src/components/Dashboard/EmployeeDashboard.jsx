@@ -18,18 +18,18 @@ const EmployeeDashboard = () => {
   const { user, isEmployee, isAuthenticated } = useAuth();
 
   // Use Task context to get tasks data and functions
-  // Note: TaskContext already filters based on user.id for employees
+  // FIX: Destructuring matches the fixed TaskContext.jsx value
   const {
-    tasks, // This `tasks` variable will already be filtered for the employee's tasks by TaskContext
-    isLoadingTasks,
-    taskError,
+    tasks, // This now correctly maps to `allTasks` from TaskContext
+    isLoadingTasks, // This now correctly maps to `loading` from TaskContext
+    taskError, // This now correctly maps to `error` from TaskContext
     fetchTasks,
-    newTasks, // These are specific to the employee now as per TaskContext logic
-    inProgressTasks, // Tasks that are 'in progress'
+    newTasks,
+    inProgressTasks,
     completedTasks,
     failedTasks,
     rejectedTasks,
-    updateTask, // Employee-specific actions: updating task status (start, complete, fail)
+    updateTask,
   } = useTasks();
 
   const [activeTab, setActiveTab] = useState("myTasks"); // Default to 'My All Tasks' view
@@ -37,9 +37,10 @@ const EmployeeDashboard = () => {
   // Fetch tasks when the component mounts or user/auth state changes
   useEffect(() => {
     if (isAuthenticated && isEmployee) {
+      // This is line 40 where the error was! Now `fetchTasks` is properly provided.
       fetchTasks(); // Trigger fetching tasks relevant to this employee
     }
-  }, [isAuthenticated, isEmployee, fetchTasks]);
+  }, [isAuthenticated, isEmployee, fetchTasks]); // Dependencies are correct
 
   if (isLoadingTasks && !tasks.length) {
     return (
@@ -69,7 +70,8 @@ const EmployeeDashboard = () => {
     <div className="min-h-screen w-full bg-gray-950 p-6 sm:p-10 text-white font-sans">
       <Header />
       <h1 className="text-4xl font-bold mb-10 text-center">
-        Hello, {user.name}! Welcome to Your Tasks
+        Hello, {user?.name || user?.email}! Welcome to Your Tasks{" "}
+        {/* user.name might be undefined, fallback to email */}
       </h1>
 
       <div className="flex flex-wrap justify-center mb-8 gap-2 sm:gap-4">
@@ -147,7 +149,7 @@ const EmployeeDashboard = () => {
         )}
         {activeTab === "MyFailedTasks" && (
           <MyFailedTasks
-            tasks={failedTasks || rejectedTasks}
+            tasks={failedTasks || rejectedTasks} // Ensure both are considered if needed
             updateTask={updateTask}
           />
         )}

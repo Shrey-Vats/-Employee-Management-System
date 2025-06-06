@@ -1,21 +1,17 @@
+// src/components/other/CreateTask.jsx
 import React, { useState } from "react";
 
-const CreateTask = () => {
-  // State for all form fields
+// Accept addTask and users as props
+const CreateTask = ({ addTask, users }) => {
   const [taskTitle, setTaskTitle] = useState("");
   const [dueDate, setDueDate] = useState("");
+  // IMPORTANT: assignedTo will now store the user ID
   const [assignedTo, setAssignedTo] = useState("");
   const [category, setCategory] = useState("");
-  const [priority, setPriority] = useState("Medium"); // Added priority with default
+  const [priority, setPriority] = useState("Medium");
   const [description, setDescription] = useState("");
+  const [message, setMessage] = useState("");
 
-  // Sample data for dropdowns (in a real app, these would come from an API)
-  const employees = [
-    "Shrey Vats",
-    "Priya Sharma",
-    "Rahul Singh",
-    "Anjali Kumari",
-  ];
   const categories = [
     "Development",
     "Design",
@@ -26,25 +22,46 @@ const CreateTask = () => {
   ];
   const priorities = ["High", "Medium", "Low"];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // In a real application, you'd send this data to your backend API
-    console.log("New Task Details:");
-    console.log({
-      taskTitle,
+    setMessage("");
+
+    if (
+      !taskTitle ||
+      !dueDate ||
+      !assignedTo || // Make sure this is a valid user ID
+      !category ||
+      !priority ||
+      !description
+    ) {
+      setMessage("Please fill in all required fields.");
+      return;
+    }
+
+    const newTaskData = {
+      title: taskTitle,
       dueDate,
-      assignedTo,
+      assignedTo, // This is now the user ID (e.g., MongoDB _id)
       category,
       priority,
       description,
-    });
-    // Reset form fields after submission
-    setTaskTitle("");
-    setDueDate("");
-    setAssignedTo("");
-    setCategory("");
-    setPriority("Medium");
-    setDescription("");
+      status: "new", // Default status for newly created tasks (match your backend's expected status strings)
+    };
+
+    try {
+      await addTask(newTaskData);
+      setMessage("Task created successfully!");
+      // Reset form fields after successful submission
+      setTaskTitle("");
+      setDueDate("");
+      setAssignedTo(""); // Reset assignedTo to empty string
+      setCategory("");
+      setPriority("Medium");
+      setDescription("");
+    } catch (error) {
+      console.error("Failed to create task:", error);
+      setMessage(`Failed to create task: ${error.message || "Unknown error."}`);
+    }
   };
 
   return (
@@ -59,7 +76,6 @@ const CreateTask = () => {
         onSubmit={handleSubmit}
         className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6"
       >
-        {/* Left Column for Inputs */}
         <div className="md:col-span-1">
           {/* Task Title */}
           <div>
@@ -93,12 +109,12 @@ const CreateTask = () => {
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              className="w-full bg-gray-700 border border-gray-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 py-2.5 px-4 rounded-lg outline-none text-base transition-all duration-200 appearance-none date-input-icon" // Added appearance-none and custom class for date icon
+              className="w-full bg-gray-700 border border-gray-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 py-2.5 px-4 rounded-lg outline-none text-base transition-all duration-200 appearance-none date-input-icon"
               required
             />
           </div>
 
-          {/* Assign To (Dropdown) */}
+          {/* Assign To (Dropdown) - Now dynamically populated */}
           <div className="mt-5">
             <label
               htmlFor="assignedTo"
@@ -110,17 +126,29 @@ const CreateTask = () => {
               id="assignedTo"
               value={assignedTo}
               onChange={(e) => setAssignedTo(e.target.value)}
-              className="w-full bg-gray-700 border border-gray-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 py-2.5 px-4 rounded-lg outline-none text-base transition-all duration-200 custom-select" // Added custom-select for dropdown icon
+              className="w-full bg-gray-700 border border-gray-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 py-2.5 px-4 rounded-lg outline-none text-base transition-all duration-200 custom-select"
               required
             >
               <option value="" disabled>
                 Select an employee
               </option>
-              {employees.map((employee) => (
-                <option key={employee} value={employee}>
-                  {employee}
+              {/* Conditional rendering for users */}
+              {users && users.length > 0 ? (
+                users.map((user) => (
+                  // Use user._id or user.id based on your backend's user object structure
+                  <option key={user._id || user.id} value={user._id || user.id}>
+                    {user.name || user.email}{" "}
+                    {/* Display user's name or email */}
+                  </option>
+                ))
+              ) : (
+                // Show a loading or no-data message if users are not yet fetched or are empty
+                <option value="" disabled>
+                  {users === null
+                    ? "Loading employees..."
+                    : "No employees found"}
                 </option>
-              ))}
+              )}
             </select>
           </div>
 
@@ -188,9 +216,9 @@ const CreateTask = () => {
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              rows="8" // Adjusted rows for better initial height
+              rows="8"
               placeholder="Provide a detailed description of the task..."
-              className="w-full h-full min-h-[160px] bg-gray-700 border border-gray-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 py-2.5 px-4 rounded-lg outline-none text-base transition-all duration-200 placeholder-gray-500 resize-y" // Added resize-y
+              className="w-full h-full min-h-[160px] bg-gray-700 border border-gray-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 py-2.5 px-4 rounded-lg outline-none text-base transition-all duration-200 placeholder-gray-500 resize-y"
               required
             ></textarea>
           </div>
@@ -204,6 +232,16 @@ const CreateTask = () => {
           >
             Create Task
           </button>
+          {/* Message display for success/error */}
+          {message && (
+            <p
+              className={`mt-4 text-center text-sm ${
+                message.includes("Failed") ? "text-red-400" : "text-green-400"
+              }`}
+            >
+              {message}
+            </p>
+          )}
         </div>
       </form>
     </div>

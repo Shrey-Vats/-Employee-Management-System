@@ -101,11 +101,11 @@ const TaskSchema = new Schema(
 );
 
 // Export Mongoose models
-const User = mongoose.model("User", UserSchema);
-const Task = mongoose.model("Task", TaskSchema); // Model name changed to "Task"
-
-// Connection to MongoDB
-const connectDB = async () => {
+// backend/db.js
+// ... (rest of the code is same)
+export const User = mongoose.model("User", UserSchema);
+export const Task = mongoose.model("Task", TaskSchema);
+export const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGO_DB);
     console.log("MongoDB connected successfully!");
@@ -115,11 +115,9 @@ const connectDB = async () => {
     // and attempt re-connection or send an alert.
     process.exit(1); // Exit process with failure
   }
-};
+};// Model name changed to "Task"
+
+// Connection to MongoDB
 
 // Export the models and connection function
-module.exports = {
-  User,
-  Task,
-  connectDB,
-};
+

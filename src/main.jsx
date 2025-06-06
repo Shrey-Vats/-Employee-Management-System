@@ -4,17 +4,24 @@ import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import "./index.css";
 
-// Import your context providers
-import { AuthContextProvider } from "./context/AuthContext";
-import { TaskContextProvider } from "./context/TaskContext";
+// Import BrowserRouter from react-router-dom
+import { BrowserRouter } from "react-router-dom"; // <--- Add this line
+
+import { TaskProvider } from "./context/TaskContext.jsx";
+import { AuthContextProvider } from "./context/AuthContext.jsx";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    {/* AuthContextProvider should be higher in the tree if TaskContextProvider depends on it */}
-    <AuthContextProvider>
-      <TaskContextProvider>
-        <App />
-      </TaskContextProvider>
-    </AuthContextProvider>
+    {/* Wrap your entire application with BrowserRouter */}
+    <BrowserRouter>
+      {" "}
+      {/* <--- Add this */}
+      <AuthContextProvider>
+        <TaskProvider>
+          <App />
+        </TaskProvider>
+      </AuthContextProvider>
+    </BrowserRouter>{" "}
+    {/* <--- Add this */}
   </React.StrictMode>
 );

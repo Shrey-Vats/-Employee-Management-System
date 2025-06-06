@@ -1,16 +1,14 @@
 // src/components/Dashboard/AdminDashboard.jsx
 import React, { useState, useEffect } from "react";
-import Header from "../other/Header"; // Path unchanged
-import CreateTask from "../other/CreateTask"; // Path unchanged
-import AllTask from "../other/AllTask"; // Path unchanged
+import Header from "../other/Header";
+import CreateTask from "../other/CreateTask";
+import AllTask from "../other/AllTask";
 
-// Corrected paths for admin-specific task views from src/components/Task/
 import NewTask from "../Task/NewTask";
 import AcceptTask from "../Task/AcceptTask";
 import CompleteTask from "../Task/CompleteTask";
 import FailedTask from "../Task/FailedTask";
 
-// Import useAuth and useTasks hooks
 import { useAuth } from "../../context/AuthContext";
 import { useTasks } from "../../context/TaskContext";
 
@@ -23,7 +21,7 @@ const AdminDashboard = () => {
     tasks, // All tasks fetched by admin role
     isLoadingTasks,
     taskError,
-    fetchTasks, // Function to re-fetch tasks if needed
+    // fetchTasks, // TaskContext's useEffect handles this now
     newTasks,
     acceptedTasks,
     completedTasks,
@@ -31,30 +29,39 @@ const AdminDashboard = () => {
     addTask, // Admin-specific action: creating tasks
     updateTask, // Admin/Employee action: updating tasks
     deleteTask, // Admin-specific action: deleting tasks
+    users, // <--- NEW: Get the list of users (employees)
+    isLoadingUsers, // <--- NEW: Get loading state for users
+    usersError, // <--- NEW: Get error state for users
   } = useTasks();
 
   const [activeTab, setActiveTab] = useState("allTasks");
 
-  // Fetch tasks when the component mounts or user/auth state changes
+  // Removed explicit fetchTasks here as TaskContext's useEffect already triggers it
+  // and fetchEmployees based on isAuthenticated and isAdmin.
+  // You can keep this useEffect if you need to perform actions *after* tasks/users are loaded
+  // or based on specific tab changes, but for initial fetch, TaskContext handles it.
   useEffect(() => {
-    if (isAuthenticated && isAdmin) {
-      fetchTasks(); // Trigger fetching all tasks for the admin
-    }
-  }, [isAuthenticated, isAdmin, fetchTasks]); // fetchTasks is stable due to useCallback in TaskContext
+    // Example: If you wanted to refetch *only* when the tab changes to 'createTask'
+    // if (activeTab === 'createTask' && !users.length && !isLoadingUsers && !usersError) {
+    //   // Potentially call a fetchUsers function if TaskContext exposed it directly
+    // }
+  }, [activeTab]);
 
-  if (isLoadingTasks && !tasks.length) {
-    // Show loading only if no tasks are present yet
+  // Combine loading states for a comprehensive loading screen
+  // Show loading if tasks are loading AND no tasks are present yet, OR if users are loading.
+  if ((isLoadingTasks && !tasks.length) || isLoadingUsers) {
     return (
       <div className="min-h-screen w-full bg-gray-950 flex items-center justify-center text-white">
-        Loading admin tasks...
+        Loading admin dashboard data...
       </div>
     );
   }
 
-  if (taskError) {
+  // Combine error states for a comprehensive error screen
+  if (taskError || usersError) {
     return (
       <div className="min-h-screen w-full bg-gray-950 flex items-center justify-center text-red-500">
-        Error loading tasks: {taskError}
+        Error loading data: {taskError || usersError}
       </div>
     );
   }
@@ -73,11 +80,10 @@ const AdminDashboard = () => {
     <div className="min-h-screen w-full bg-gray-950 p-6 sm:p-10 text-white font-sans">
       <Header />
       <h1 className="text-4xl font-bold mb-10 text-center">
-        Admin Task Management ({user.name})
+        Admin Task Management ({user?.name || user?.email})
       </h1>
 
       <div className="flex flex-wrap justify-center mb-8 gap-2 sm:gap-4">
-        {/* ... (your existing tab buttons) ... */}
         <button
           onClick={() => setActiveTab("createTask")}
           className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium text-sm sm:text-lg transition-colors duration-200
@@ -147,8 +153,10 @@ const AdminDashboard = () => {
       </div>
 
       <div className="content-area">
-        {/* Pass tasks and functions as props */}
-        {activeTab === "createTask" && <CreateTask addTask={addTask} />}
+        {activeTab === "createTask" && (
+          <CreateTask addTask={addTask} users={users} />
+        )}{" "}
+        {/* <--- Pass the 'users' prop */}
         {activeTab === "allTasks" && (
           <AllTask
             tasks={tasks}

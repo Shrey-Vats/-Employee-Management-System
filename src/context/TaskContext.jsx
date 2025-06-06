@@ -1,202 +1,173 @@
 // src/context/TaskContext.jsx
 import React, {
   createContext,
+  useContext,
   useState,
   useEffect,
-  useContext,
   useCallback,
-  useMemo,
 } from "react";
-// Assuming api.js will be created in src/utils/
-import api from "../utils/api";
-// Import useAuth to get user data/role
-import { useAuth } from "./AuthContext";
+import {
+  getAllTasks,
+  getTasksByUserId,
+  createTask,
+  updateTaskStatus,
+  deleteTask,
+  getAllUsers, // NEW: Import getAllUsers API function
+} from "../utils/api";
+import { AuthContext } from "./AuthContext";
 
-// Create the Task Context
-export const TaskContext = createContext();
+const TaskContext = createContext();
 
-// Create the Task Provider Component
-export const TaskContextProvider = ({ children }) => {
-  const { user, isAuthenticated, isAdmin } = useAuth(); // Get user and authentication state from AuthContext
+export const useTasks = () => useContext(TaskContext);
 
-  const [tasks, setTasks] = useState([]); // Stores all tasks fetched
-  const [isLoadingTasks, setIsLoadingTasks] = useState(false); // Tracks if task fetching is in progress
-  const [taskError, setTaskError] = useState(null); // Stores task-related errors
+export const TaskProvider = ({ children }) => {
+  const [allTasks, setAllTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Memoize fetchTasks to prevent unnecessary re-renders in useEffect
+  // NEW: State for active employees (users)
+  const [employees, setEmployees] = useState([]); // Renamed from 'users' for clarity
+  const [loadingEmployees, setLoadingEmployees] = useState(false);
+  const [employeesError, setEmployeesError] = useState(null);
+
+  const { user: currentUser, isAuthenticated } = useContext(AuthContext);
+
+  // --- Functions to interact with the backend API ---
+
   const fetchTasks = useCallback(async () => {
-    setIsLoadingTasks(true);
-    setTaskError(null);
+    setLoading(true);
+    setError(null);
     try {
-      let response;
-      if (isAdmin) {
-        // Admin fetches all tasks
-        // This endpoint should return all tasks from your backend
-        response = await api.get("/tasks/admin/all");
-      } else if (user) {
-        // Employee fetches tasks assigned to them
-        // This endpoint should return tasks assigned to user.id
-        response = await api.get(`/tasks/employee/${user.id}`);
-      } else {
-        // No authenticated user, clear tasks and stop loading
-        setTasks([]);
-        setIsLoadingTasks(false);
-        return;
+      let fetchedData = [];
+      if (isAuthenticated && currentUser) {
+        if (currentUser.role === "admin") {
+          fetchedData = await getAllTasks();
+        } else if (currentUser.role === "employee" && currentUser.id) {
+          fetchedData = await getTasksByUserId(currentUser.id);
+        }
       }
-      setTasks(response.data); // Assuming response.data is an array of tasks
+      setAllTasks(fetchedData);
     } catch (err) {
-      console.error(
-        "Failed to fetch tasks:",
-        err.response?.data || err.message
-      );
-      setTaskError(err.response?.data?.message || "Failed to load tasks.");
-      setTasks([]); // Clear tasks on error
+      console.error("Failed to fetch tasks:", err);
+      setError(err.message || "Failed to load tasks.");
+      setAllTasks([]);
     } finally {
-      setIsLoadingTasks(false);
+      setLoading(false);
     }
-  }, [user, isAdmin]); // Recreate fetchTasks if user or isAdmin changes
+  }, [isAuthenticated, currentUser]);
 
-  // Effect to call fetchTasks when the user's authentication status or role changes
+  // NEW: Function to fetch active employees for the dropdown
+  const fetchEmployees = useCallback(async () => {
+    // Only fetch employees if the current user is an admin and authenticated
+    if (!isAuthenticated || currentUser?.role !== "admin") {
+      setEmployees([]); // Clear employees if not admin
+      return;
+    }
+
+    setLoadingEmployees(true);
+    setEmployeesError(null);
+    try {
+      const data = await getAllUsers(); // Call your API function to get all users
+      // Filter for employees on the frontend if your API doesn't do it
+      const activeEmployees = data.filter(
+        (user) => user.role === "employee" && user.isActive === true // Assuming 'isActive' property exists
+      );
+      setEmployees(activeEmployees);
+    } catch (err) {
+      console.error("Failed to fetch employees:", err);
+      setEmployeesError(err.message || "Failed to load employees.");
+      setEmployees([]);
+    } finally {
+      setLoadingEmployees(false);
+    }
+  }, [isAuthenticated, currentUser]); // Depend on auth status and current user for re-fetch
+
+  // Trigger fetchTasks and fetchEmployees when component mounts or dependencies change
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchTasks();
-    } else {
-      setTasks([]); // Clear tasks if no longer authenticated
-    }
-  }, [isAuthenticated, fetchTasks]); // fetchTasks is now stable due to useCallback
-
-  // Task operation functions: These interact with your backend API
-  // and then update the local state to reflect the changes.
+    fetchTasks();
+    fetchEmployees(); // Call new fetchEmployees function
+  }, [fetchTasks, fetchEmployees]); // Add fetchEmployees to dependencies
 
   const addTask = async (newTaskData) => {
-    setIsLoadingTasks(true); // Can also use a separate loading state for each action if granular control is needed
-    setTaskError(null);
     try {
-      const response = await api.post("/tasks", newTaskData); // Endpoint for creating a task
-      // Option 1: Add the new task to the existing state
-      setTasks((prevTasks) => [...prevTasks, response.data]);
-      // Option 2 (Alternative): Re-fetch all tasks to ensure data consistency
-      // await fetchTasks();
-      return response.data; // Return the created task for the caller
+      const response = await createTask(newTaskData);
+      // setAllTasks((prevTasks) => [...prevTasks, response.task]); // Removed, fetchTasks will re-populate
+      fetchTasks(); // Re-fetch all tasks to ensure correct state and filtering
+      return response.task;
     } catch (err) {
-      console.error("Failed to add task:", err.response?.data || err.message);
-      setTaskError(err.response?.data?.message || "Failed to add task.");
-      throw err; // Re-throw to allow components to handle specific errors
-    } finally {
-      setIsLoadingTasks(false);
-    }
-  };
-
-  const updateTask = async (taskId, updatedData) => {
-    setIsLoadingTasks(true);
-    setTaskError(null);
-    try {
-      const response = await api.put(`/tasks/${taskId}`, updatedData); // Endpoint for updating a task
-      setTasks((prevTasks) =>
-        prevTasks.map((task) => (task.id === taskId ? response.data : task))
-      );
-      return response.data;
-    } catch (err) {
-      console.error(
-        "Failed to update task:",
-        err.response?.data || err.message
-      );
-      setTaskError(err.response?.data?.message || "Failed to update task.");
+      console.error("Error adding task:", err);
       throw err;
-    } finally {
-      setIsLoadingTasks(false);
     }
   };
 
-  const deleteTask = async (taskId) => {
-    setIsLoadingTasks(true);
-    setTaskError(null);
+  const updateTask = async (taskId, updates) => {
     try {
-      await api.delete(`/tasks/${taskId}`); // Endpoint for deleting a task
-      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
+      // Your updateTaskStatus API function expects `newStatus` as the second arg.
+      // So, if `updates` contains `{ status: "completed" }`, extract it.
+      // If `updates` could contain other fields, your `updateTaskStatus` in api.js
+      // would need to be updated to accept an `updates` object, not just `newStatus`.
+      const response = await updateTaskStatus(taskId, updates.status); // Assuming updates.status is present
+      // setAllTasks((prevTasks) =>
+      //   prevTasks.map(
+      //     (task) => (task._id === taskId ? { ...task, ...response.task } : task)
+      //   )
+      // );
+      fetchTasks(); // Re-fetch all tasks
+      return response.task;
     } catch (err) {
-      console.error(
-        "Failed to delete task:",
-        err.response?.data || err.message
-      );
-      setTaskError(err.response?.data?.message || "Failed to delete task.");
+      console.error("Error updating task:", err);
       throw err;
-    } finally {
-      setIsLoadingTasks(false);
     }
   };
 
-  // You can add more specific action functions here, e.g.,
-  const acceptTask = (taskId) => updateTask(taskId, { status: "accepted" });
-  const completeTask = (taskId) => updateTask(taskId, { status: "completed" });
-  const failTask = (taskId) => updateTask(taskId, { status: "failed" });
-  const startTask = (taskId) => updateTask(taskId, { status: "in progress" });
-  // ... and so on for other status changes
+  const removeTask = async (taskId) => {
+    try {
+      await deleteTask(taskId);
+      setAllTasks((prevTasks) =>
+        prevTasks.filter((task) => task._id !== taskId)
+      );
+    } catch (err) {
+      console.error("Error deleting task:", err);
+      throw err;
+    }
+  };
 
-  // Filtered task lists for convenience (memoized for performance)
-  // These will be used by your dashboard components (AdminDashboard, EmployeeDashboard)
-  const allTasks = useMemo(() => tasks, [tasks]); // Simple memoization for the full list
-
-  const newTasks = useMemo(
-    () =>
-      tasks.filter(
-        (task) =>
-          task.status?.toLowerCase() === "new" ||
-          task.status?.toLowerCase() === "pending"
-      ),
-    [tasks]
+  // --- Filtering logic within context for various components ---
+  const newTasks = allTasks.filter(
+    (task) => task.status === "new" || task.status === "pending"
   );
-  const acceptedTasks = useMemo(
-    () => tasks.filter((task) => task.status?.toLowerCase() === "accepted"),
-    [tasks]
+  const acceptedTasks = allTasks.filter(
+    (task) => task.status === "accepted" || task.status === "in progress"
   );
-  const inProgressTasks = useMemo(
-    () => tasks.filter((task) => task.status?.toLowerCase() === "in progress"),
-    [tasks]
-  );
-  const completedTasks = useMemo(
-    () => tasks.filter((task) => task.status?.toLowerCase() === "completed"),
-    [tasks]
-  );
-  const failedTasks = useMemo(
-    () => tasks.filter((task) => task.status?.toLowerCase() === "failed"),
-    [tasks]
-  );
-  const rejectedTasks = useMemo(
-    () => tasks.filter((task) => task.status?.toLowerCase() === "rejected"), // If you have a 'rejected' status
-    [tasks]
+  const completedTasks = allTasks.filter((task) => task.status === "completed");
+  const failedTasks = allTasks.filter((task) => task.status === "failed");
+  const rejectedTasks = allTasks.filter((task) => task.status === "rejected");
+  const inProgressTasks = allTasks.filter(
+    (task) => task.status === "in progress"
   );
 
-  const taskContextValue = {
-    tasks: allTasks, // Expose the full list
-    isLoadingTasks,
-    taskError,
-    fetchTasks, // Allow components to trigger a refresh
-    addTask,
-    updateTask,
-    deleteTask,
-    // Expose specific action functions
-    acceptTask,
-    completeTask,
-    failTask,
-    startTask,
-    // Expose filtered task lists for specific views
+  const value = {
+    tasks: allTasks,
+    isLoadingTasks: loading,
+    taskError: error,
+
     newTasks,
     acceptedTasks,
-    inProgressTasks, // Added this for employee view
     completedTasks,
     failedTasks,
     rejectedTasks,
+    inProgressTasks,
+
+    fetchTasks,
+    addTask,
+    updateTask,
+    deleteTask: removeTask,
+
+    // NEW: Expose employees data and loading/error states
+    users: employees, // Provide the filtered employee list
+    isLoadingUsers: loadingEmployees,
+    usersError: employeesError,
   };
 
-  return (
-    <TaskContext.Provider value={taskContextValue}>
-      {children}
-    </TaskContext.Provider>
-  );
-};
-
-// Custom hook to consume the TaskContext easily
-export const useTasks = () => {
-  return useContext(TaskContext);
+  return <TaskContext.Provider value={value}>{children}</TaskContext.Provider>;
 };
