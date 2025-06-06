@@ -1,25 +1,31 @@
-// AdminDashboard.jsx
+// src/components/Dashboard/AdminDashboard.jsx
 import React, { useState } from "react";
-import Header from "../other/header"; // Assuming Header path is correct
-import CreateTask from "../other/CreateTask"; // Assuming CreateTask path is correct
-import AllTask from "../other/AllTask"; // Assuming AllTask path is correct
+// Corrected paths for common components from src/components/other/
+import Header from "../other/Header";
+import CreateTask from "../other/CreateTask";
+import AllTask from "../other/AllTask";
 
-// Import the new task components
-import NewTask from "../Task/NewTask"; // Adjust path if your 'tasks' folder is elsewhere
-import AcceptTask from "../Task/AcceptTask"; // Adjust path
-import CompleteTask from "../Task/CompleteTask"; // Adjust path
-import FailedTask from "../Task/FailedTask"; // Adjust path
+// Corrected paths for admin-specific task views from src/components/Task/
+// Note: These files (AcceptTask, CompleteTask, FailedTask, NewTask) should exist directly in Task/
+import NewTask from "../Task/NewTask";
+import AcceptTask from "../Task/AcceptTask";
+import CompleteTask from "../Task/CompleteTask";
+import FailedTask from "../Task/FailedTask";
 
 const AdminDashboard = () => {
-  // State to manage which tab/view is currently active
-  const [activeTab, setActiveTab] = useState("allTasks"); // Default to 'All Tasks' view
+  // State to manage which tab/view is currently active for the admin
+  const [activeTab, setActiveTab] = useState("allTasks"); // Default view
 
   return (
     <div className="min-h-screen w-full bg-gray-950 p-6 sm:p-10 text-white font-sans">
-      {/* Header component (assuming it's already refined) */}
+      {/* Header component */}
       <Header />
 
-      {/* Navigation/Tab Buttons */}
+      <h1 className="text-4xl font-bold mb-10 text-center">
+        Admin Task Management
+      </h1>
+
+      {/* Navigation/Tab Buttons for Admin Views */}
       <div className="flex flex-wrap justify-center mb-8 gap-2 sm:gap-4">
         <button
           onClick={() => setActiveTab("createTask")}
@@ -89,7 +95,7 @@ const AdminDashboard = () => {
         </button>
       </div>
 
-      {/* Conditionally Rendered Content Area */}
+      {/* Conditionally Rendered Admin Content Area */}
       <div className="content-area">
         {activeTab === "createTask" && <CreateTask />}
         {activeTab === "allTasks" && <AllTask />}
